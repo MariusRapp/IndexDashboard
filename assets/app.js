@@ -121,6 +121,24 @@ function renderMeterCard(title, fg) {
   `;
 }
 
+function renderMiniMeter(component) {
+  const pct = Math.max(0, Math.min(100, component.value));
+  const colorVar = ratingColorVar(component.rating);
+  return `
+    <div class="mini-meter-card">
+      <div class="mini-meter-label">${component.label}</div>
+      <div class="mini-meter-value-row">
+        <span class="mini-meter-value">${formatNumber(component.value)}</span>
+        <span class="mini-meter-rating" style="background: var(${colorVar})">${ratingLabel(component.rating)}</span>
+      </div>
+      <div class="mini-meter-track-wrap">
+        <div class="mini-meter-track"></div>
+        <div class="mini-meter-pointer" style="left: ${pct}%"></div>
+      </div>
+    </div>
+  `;
+}
+
 function renderUpdatedAt(iso) {
   const el = document.getElementById("updated-at");
   if (!iso) {
@@ -137,6 +155,7 @@ function renderUpdatedAt(iso) {
 async function loadDashboard() {
   const marketsGrid = document.getElementById("markets-grid");
   const fgGrid = document.getElementById("fear-greed-grid");
+  const fgComponentsGrid = document.getElementById("fg-components-grid");
   try {
     const res = await fetch(DATA_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -146,12 +165,18 @@ async function loadDashboard() {
       renderMeterCard("CNN Fear &amp; Greed Index", data.fear_greed?.cnn) +
       renderMeterCard("Crypto Fear &amp; Greed Index", data.fear_greed?.crypto);
 
+    const components = data.fear_greed?.cnn?.components || [];
+    fgComponentsGrid.innerHTML = components.length
+      ? components.map(renderMiniMeter).join("")
+      : `<p class="error">Keine Teilindikatoren verfügbar</p>`;
+
     marketsGrid.innerHTML = (data.markets || []).map(renderMarketTile).join("");
 
     renderUpdatedAt(data.updated_at);
   } catch (err) {
     marketsGrid.innerHTML = `<p class="error">Daten konnten nicht geladen werden: ${err.message}</p>`;
     fgGrid.innerHTML = "";
+    fgComponentsGrid.innerHTML = "";
   }
 }
 

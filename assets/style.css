@@ -241,6 +241,77 @@ body {
 
 .error { color: var(--delta-bad); }
 
+/* ---------- Mini meters (Fear & Greed components) ---------- */
+
+.mini-meter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.mini-meter-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.mini-meter-card .mini-meter-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  min-height: 2.1em;
+}
+
+.mini-meter-card .mini-meter-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mini-meter-card .mini-meter-value {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.mini-meter-card .mini-meter-rating {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.mini-meter-track-wrap {
+  position: relative;
+  margin-top: 8px;
+  height: 8px;
+}
+
+.mini-meter-track {
+  height: 6px;
+  border-radius: 999px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    var(--status-critical) 0%,
+    var(--status-serious) 25%,
+    var(--status-warning) 50%,
+    var(--status-warning) 62%,
+    var(--status-good) 100%
+  );
+}
+
+.mini-meter-pointer {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transform: translateX(-1px);
+}
+
 /* ---------- Footer ---------- */
 
 .page-footer {

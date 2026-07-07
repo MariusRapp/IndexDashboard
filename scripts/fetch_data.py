@@ -121,6 +121,20 @@ def fetch_crypto_fear_greed(previous):
         return None
 
 
+# CNN's official 7 components. The API also exposes market_momentum_sp500 and
+# market_volatility_vix as near-duplicate raw variants of the sp125/vix_50
+# keys below (same score/rating) - those are skipped to avoid redundancy.
+CNN_COMPONENTS = [
+    ("market_momentum_sp125", "Marktdynamik (S&P 500 vs. 125-Tage-Linie)"),
+    ("stock_price_strength", "Kursstärke (Hoch/Tief-Verhältnis)"),
+    ("stock_price_breadth", "Marktbreite (Handelsvolumen)"),
+    ("put_call_options", "Put/Call-Verhältnis"),
+    ("market_volatility_vix_50", "Volatilität (VIX vs. 50-Tage-Linie)"),
+    ("junk_bond_demand", "Nachfrage nach Ramsch-Anleihen"),
+    ("safe_haven_demand", "Nachfrage nach sicheren Häfen"),
+]
+
+
 def fetch_cnn_fear_greed(previous):
     try:
         text = http_get(
@@ -133,6 +147,19 @@ def fetch_cnn_fear_greed(previous):
         rating = fg.get("rating")
         if score is None:
             raise ValueError("no score in CNN response")
+
+        components = []
+        for key, label in CNN_COMPONENTS:
+            comp = payload.get(key)
+            if not comp or comp.get("score") is None:
+                continue
+            components.append({
+                "key": key,
+                "label": label,
+                "value": round(float(comp["score"])),
+                "rating": (comp.get("rating") or "").title(),
+            })
+
         return {
             "value": round(float(score)),
             "rating": (rating or "").title(),
@@ -141,6 +168,7 @@ def fetch_cnn_fear_greed(previous):
             "previous_month": fg.get("previous_1_month"),
             "previous_year": fg.get("previous_1_year"),
             "timestamp": fg.get("timestamp"),
+            "components": components,
             "stale": False,
         }
     except Exception as exc:
