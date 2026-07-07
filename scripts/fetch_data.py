@@ -30,13 +30,28 @@ CNN_HEADERS = {
 }
 
 MARKET_SYMBOLS = [
-    {"symbol": "^GSPC", "name": "S&P 500"},
-    {"symbol": "^DJI", "name": "Dow Jones"},
-    {"symbol": "^NDX", "name": "Nasdaq 100"},
-    {"symbol": "^GDAXI", "name": "DAX"},
-    {"symbol": "^STOXX50E", "name": "EuroStoxx 50"},
-    {"symbol": "^VIX", "name": "VIX"},
+    {"symbol": "^GSPC", "name": "S&P 500", "group": "indices"},
+    {"symbol": "^DJI", "name": "Dow Jones", "group": "indices"},
+    {"symbol": "^NDX", "name": "Nasdaq 100", "group": "indices"},
+    {"symbol": "^GDAXI", "name": "DAX", "group": "indices"},
+    {"symbol": "^STOXX50E", "name": "EuroStoxx 50", "group": "indices"},
+    {"symbol": "^N225", "name": "Nikkei 225", "group": "indices"},
+    {"symbol": "^FTSE", "name": "FTSE 100", "group": "indices"},
+    {"symbol": "URTH", "name": "MSCI World (ETF)", "group": "indices"},
+    {"symbol": "^VIX", "name": "VIX", "group": "rates", "delta_style": "inverse"},
+    {"symbol": "^MOVE", "name": "MOVE (Anleihen-Vola)", "group": "rates", "delta_style": "inverse"},
+    {"symbol": "^TNX", "name": "US-Rendite 10J (%)", "group": "rates", "delta_style": "neutral"},
+    {"symbol": "DX-Y.NYB", "name": "Dollar-Index (DXY)", "group": "rates", "delta_style": "neutral"},
+    {"symbol": "GC=F", "name": "Gold (USD/oz)", "group": "commodities"},
+    {"symbol": "CL=F", "name": "WTI Rohöl (USD)", "group": "commodities"},
+    {"symbol": "BTC-USD", "name": "Bitcoin (USD)", "group": "commodities"},
+    {"symbol": "ETH-USD", "name": "Ethereum (USD)", "group": "commodities"},
 ]
+
+# Computed indicator: 10-year minus 3-month treasury yield (classic
+# recession signal when negative). Built from two Yahoo series because
+# FRED's T10Y3M endpoint is unreliable without an API key.
+YIELD_CURVE = {"symbol": "10Y-3M", "name": "Zinskurve 10J − 3M (Pp.)", "group": "rates"}
 
 
 def http_get(url, timeout=15, headers=None):
@@ -80,20 +95,45 @@ def fetch_market_index(symbol):
     }
 
 
+def fetch_yield_curve():
+    """10Y minus 3M treasury yield, in percentage points."""
+    long_end = fetch_market_index("^TNX")
+    short_end = fetch_market_index("^IRX")
+    n = min(len(long_end["history"]), len(short_end["history"]))
+    history = [
+        round(l - s, 2)
+        for l, s in zip(long_end["history"][-n:], short_end["history"][-n:])
+    ]
+    return {
+        "price": round(long_end["price"] - short_end["price"], 2),
+        "change_pct": None,
+        "date": long_end["date"],
+        "history": history,
+    }
+
+
 def fetch_markets(previous):
     prev_markets = {m["symbol"]: m for m in previous.get("markets", [])}
     result = []
     for item in MARKET_SYMBOLS:
-        symbol, name = item["symbol"], item["name"]
+        symbol = item["symbol"]
         try:
             fetched = fetch_market_index(symbol)
-            result.append({"symbol": symbol, "name": name, **fetched, "stale": False})
+            result.append({**item, **fetched, "stale": False})
         except Exception as exc:
             print(f"[warn] market fetch failed for {symbol}: {exc}", file=sys.stderr)
             fallback = prev_markets.get(symbol)
             if fallback:
-                fallback = {**fallback, "stale": True}
-                result.append(fallback)
+                result.append({**fallback, **item, "stale": True})
+
+    try:
+        result.append({**YIELD_CURVE, **fetch_yield_curve(), "stale": False})
+    except Exception as exc:
+        print(f"[warn] yield curve fetch failed: {exc}", file=sys.stderr)
+        fallback = prev_markets.get(YIELD_CURVE["symbol"])
+        if fallback:
+            result.append({**fallback, "group": YIELD_CURVE["group"], "stale": True})
+
     return result
 
 

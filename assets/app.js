@@ -33,9 +33,13 @@ function formatSignedPct(value) {
   return `${sign}${formatNumber(value, { maximumFractionDigits: 2 })} %`;
 }
 
-function deltaClass(value) {
-  if (value === null || value === undefined || value === 0) return "flat";
-  return value > 0 ? "up" : "down";
+// delta_style: "normal" = steigend grün, "inverse" = steigend rot
+// (Stress-Indikatoren wie VIX), "neutral" = keine Richtung gut/schlecht.
+function deltaClass(value, style) {
+  if (value === null || value === undefined || value === 0 || style === "neutral") return "flat";
+  const rising = value > 0;
+  if (style === "inverse") return rising ? "down" : "up";
+  return rising ? "up" : "down";
 }
 
 function buildSparkline(history) {
@@ -58,7 +62,7 @@ function buildSparkline(history) {
 }
 
 function renderMarketTile(market) {
-  const deltaCls = deltaClass(market.change_pct);
+  const deltaCls = deltaClass(market.change_pct, market.delta_style);
   const staleNote = market.stale
     ? `<div class="stale-note">Letzter bekannter Stand (Abruf zuletzt fehlgeschlagen)</div>`
     : "";
@@ -170,7 +174,12 @@ async function loadDashboard() {
       ? components.map(renderMiniMeter).join("")
       : `<p class="error">Keine Teilindikatoren verfügbar</p>`;
 
-    marketsGrid.innerHTML = (data.markets || []).map(renderMarketTile).join("");
+    const markets = data.markets || [];
+    const byGroup = (group, fallback) =>
+      markets.filter((m) => (m.group || fallback) === group);
+    marketsGrid.innerHTML = byGroup("indices", "indices").map(renderMarketTile).join("");
+    document.getElementById("rates-grid").innerHTML = byGroup("rates").map(renderMarketTile).join("");
+    document.getElementById("commodities-grid").innerHTML = byGroup("commodities").map(renderMarketTile).join("");
 
     renderUpdatedAt(data.updated_at);
   } catch (err) {
