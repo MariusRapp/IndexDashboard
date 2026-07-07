@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-07-07T19:32:47+00:00",
+  "updated_at": "2026-07-07T20:30:22+00:00",
   "fear_greed": {
     "cnn": {
-      "value": 42,
+      "value": 43,
       "rating": "Fear",
       "previous_close": 43.9428571428571,
       "previous_week": 30.9428571428571,
       "previous_month": 41.7714285714286,
       "previous_year": 75.08571428571429,
-      "timestamp": "2026-07-07T19:27:48+00:00",
+      "timestamp": "2026-07-07T20:18:39+00:00",
       "stale": false
     },
     "crypto": {
@@ -54,8 +54,8 @@
     {
       "symbol": "^GSPC",
       "name": "S&P 500",
-      "price": 7497.79,
-      "change_pct": -0.53,
+      "price": 7503.85,
+      "change_pct": -0.45,
       "date": "2026-07-07",
       "history": [
         7405.73,
@@ -77,15 +77,15 @@
         7483.23,
         7483.24,
         7537.43,
-        7497.79
+        7503.85
       ],
       "stale": false
     },
     {
       "symbol": "^DJI",
       "name": "Dow Jones",
-      "price": 52837.25,
-      "change_pct": -0.41,
+      "price": 52925.15,
+      "change_pct": -0.25,
       "date": "2026-07-07",
       "history": [
         50786.01,
@@ -107,15 +107,15 @@
         52305.24,
         52900.07,
         53055.91,
-        52837.25
+        52925.15
       ],
       "stale": false
     },
     {
       "symbol": "^NDX",
       "name": "Nasdaq 100",
-      "price": 29127.93,
-      "change_pct": -1.92,
+      "price": 29173.02,
+      "change_pct": -1.77,
       "date": "2026-07-07",
       "history": [
         29414.26,
@@ -137,7 +137,7 @@
         29809.13,
         29329.21,
         29697.87,
-        29127.93
+        29173.02
       ],
       "stale": false
     },
@@ -208,8 +208,8 @@
     {
       "symbol": "^VIX",
       "name": "VIX",
-      "price": 16.36,
-      "change_pct": 5.07,
+      "price": 16.13,
+      "change_pct": 3.6,
       "date": "2026-07-07",
       "history": [
         18.92,
@@ -231,7 +231,7 @@
         16.59,
         16.15,
         15.57,
-        16.36
+        16.13
       ],
       "stale": false
     }
