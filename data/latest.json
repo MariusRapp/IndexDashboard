@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-07T20:30:22+00:00",
+  "updated_at": "2026-07-07T21:16:31+00:00",
   "fear_greed": {
     "cnn": {
       "value": 43,
@@ -8,7 +8,51 @@
       "previous_week": 30.9428571428571,
       "previous_month": 41.7714285714286,
       "previous_year": 75.08571428571429,
-      "timestamp": "2026-07-07T20:18:39+00:00",
+      "timestamp": "2026-07-07T20:58:46+00:00",
+      "components": [
+        {
+          "key": "market_momentum_sp125",
+          "label": "Marktdynamik (S&P 500 vs. 125-Tage-Linie)",
+          "value": 49,
+          "rating": "Neutral"
+        },
+        {
+          "key": "stock_price_strength",
+          "label": "Kursstärke (Hoch/Tief-Verhältnis)",
+          "value": 44,
+          "rating": "Fear"
+        },
+        {
+          "key": "stock_price_breadth",
+          "label": "Marktbreite (Handelsvolumen)",
+          "value": 25,
+          "rating": "Extreme Fear"
+        },
+        {
+          "key": "put_call_options",
+          "label": "Put/Call-Verhältnis",
+          "value": 59,
+          "rating": "Greed"
+        },
+        {
+          "key": "market_volatility_vix_50",
+          "label": "Volatilität (VIX vs. 50-Tage-Linie)",
+          "value": 50,
+          "rating": "Neutral"
+        },
+        {
+          "key": "junk_bond_demand",
+          "label": "Nachfrage nach Ramsch-Anleihen",
+          "value": 27,
+          "rating": "Fear"
+        },
+        {
+          "key": "safe_haven_demand",
+          "label": "Nachfrage nach sicheren Häfen",
+          "value": 47,
+          "rating": "Neutral"
+        }
+      ],
       "stale": false
     },
     "crypto": {
