@@ -346,10 +346,15 @@ body {
   grid-template-rows: 1fr;
 }
 
-/* An expanded tile takes the full grid row so its chart is readable */
+/* An expanded tile takes the full grid row so its chart is readable;
+   the sparkline is redundant next to the big chart, so hide it */
 .stat-tile:has(.expand-panel.open),
 .mini-meter-card:has(.expand-panel.open) {
   grid-column: 1 / -1;
+}
+
+.stat-tile:has(.expand-panel.open) .spark-wrap {
+  display: none;
 }
 
 /* ---------- Full line chart (inside expand panels) ---------- */
