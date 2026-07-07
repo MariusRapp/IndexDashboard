@@ -347,13 +347,14 @@ body {
 }
 
 /* An expanded tile takes the full grid row so its chart is readable;
-   the sparkline is redundant next to the big chart, so hide it */
-.stat-tile:has(.expand-panel.open),
-.mini-meter-card:has(.expand-panel.open) {
+   the sparkline is redundant next to the big chart, so hide it.
+   The .expanded class is set by JS (more compatible than :has()). */
+.stat-tile.expanded,
+.mini-meter-card.expanded {
   grid-column: 1 / -1;
 }
 
-.stat-tile:has(.expand-panel.open) .spark-wrap {
+.stat-tile.expanded .spark-wrap {
   display: none;
 }
 

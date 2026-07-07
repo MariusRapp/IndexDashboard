@@ -224,6 +224,8 @@ function applyExpansion(id, open) {
   btn.classList.toggle("open", open);
   btn.setAttribute("aria-expanded", String(open));
   panel.classList.toggle("open", open);
+  const card = btn.closest(".stat-tile, .meter-card, .mini-meter-card");
+  if (card) card.classList.toggle("expanded", open);
   if (open) {
     const builder = expandBuilders.get(id);
     const inner = panel.querySelector(".expand-inner");
