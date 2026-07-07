@@ -1,58 +1,69 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Index Dashboard</title>
-<meta name="description" content="Marktindizes und Sentiment-Indikatoren (Fear &amp; Greed) auf einen Blick.">
+<meta name="description" content="Market indices and sentiment indicators (Fear &amp; Greed) at a glance.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <header class="page-header">
   <h1>Index Dashboard</h1>
-  <p class="subtitle">Marktindizes &amp; Stimmungsindikatoren</p>
+  <p class="subtitle">Market indices &amp; sentiment indicators</p>
 </header>
 
 <main>
   <section class="section" aria-labelledby="fg-heading">
     <h2 id="fg-heading">Fear &amp; Greed</h2>
     <div class="meter-grid" id="fear-greed-grid">
-      <p class="loading">Lade Daten…</p>
+      <p class="loading">Loading…</p>
     </div>
   </section>
 
   <section class="section" aria-labelledby="fg-components-heading">
-    <h2 id="fg-components-heading">CNN Fear &amp; Greed – Teilindikatoren</h2>
+    <h2 id="fg-components-heading">CNN Fear &amp; Greed – Components</h2>
     <div class="mini-meter-grid" id="fg-components-grid">
-      <p class="loading">Lade Daten…</p>
+      <p class="loading">Loading…</p>
     </div>
   </section>
 
   <section class="section" aria-labelledby="markets-heading">
-    <h2 id="markets-heading">Marktindizes</h2>
+    <h2 id="markets-heading">Market Indices</h2>
+    <div class="controls-row">
+      <div class="segmented" id="range-select" role="group" aria-label="Time range">
+        <button type="button" data-range="1D">1D</button>
+        <button type="button" data-range="1W">1W</button>
+        <button type="button" data-range="1M" class="active">1M</button>
+        <button type="button" data-range="3M">3M</button>
+        <button type="button" data-range="1Y">1Y</button>
+        <button type="button" data-range="5Y">5Y</button>
+      </div>
+      <button type="button" class="toggle-btn" id="grid-toggle" aria-pressed="false" title="Show min/max and reference line on sparklines">Grid</button>
+    </div>
     <div class="stat-grid" id="markets-grid">
-      <p class="loading">Lade Daten…</p>
+      <p class="loading">Loading…</p>
     </div>
   </section>
 
   <section class="section" aria-labelledby="rates-heading">
-    <h2 id="rates-heading">Zinsen, Volatilität &amp; Währung</h2>
+    <h2 id="rates-heading">Rates, Volatility &amp; Currency</h2>
     <div class="stat-grid" id="rates-grid">
-      <p class="loading">Lade Daten…</p>
+      <p class="loading">Loading…</p>
     </div>
   </section>
 
   <section class="section" aria-labelledby="commodities-heading">
-    <h2 id="commodities-heading">Rohstoffe &amp; Krypto</h2>
+    <h2 id="commodities-heading">Commodities &amp; Crypto</h2>
     <div class="stat-grid" id="commodities-grid">
-      <p class="loading">Lade Daten…</p>
+      <p class="loading">Loading…</p>
     </div>
   </section>
 </main>
 
 <footer class="page-footer">
   <p id="updated-at">—</p>
-  <p class="sources">Quellen: CNN Fear &amp; Greed Index, alternative.me (Crypto Fear &amp; Greed), Yahoo Finance. Aktualisierung alle 3 Stunden per GitHub Actions.</p>
+  <p class="sources">Sources: CNN Fear &amp; Greed Index, alternative.me (Crypto Fear &amp; Greed), Yahoo Finance. Data refreshes every 3 hours via GitHub Actions.</p>
 </footer>
 
 <script src="assets/app.js"></script>

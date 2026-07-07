@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Fetches market indices and sentiment indices, writes data/latest.json.
 
-Runs inside GitHub Actions (server-side) so CORS-blocked sources (CNN, Stooq)
-are reachable regardless of what a browser could fetch directly.
+Runs inside GitHub Actions (server-side) so CORS-blocked sources (CNN,
+Yahoo Finance) are reachable regardless of what a browser could fetch
+directly.
 """
 import json
 import sys
@@ -34,16 +35,16 @@ MARKET_SYMBOLS = [
     {"symbol": "^DJI", "name": "Dow Jones", "group": "indices"},
     {"symbol": "^NDX", "name": "Nasdaq 100", "group": "indices"},
     {"symbol": "^GDAXI", "name": "DAX", "group": "indices"},
-    {"symbol": "^STOXX50E", "name": "EuroStoxx 50", "group": "indices"},
+    {"symbol": "^STOXX50E", "name": "EURO STOXX 50", "group": "indices"},
     {"symbol": "^N225", "name": "Nikkei 225", "group": "indices"},
     {"symbol": "^FTSE", "name": "FTSE 100", "group": "indices"},
     {"symbol": "URTH", "name": "MSCI World (ETF)", "group": "indices"},
     {"symbol": "^VIX", "name": "VIX", "group": "rates", "delta_style": "inverse"},
-    {"symbol": "^MOVE", "name": "MOVE (Anleihen-Vola)", "group": "rates", "delta_style": "inverse"},
-    {"symbol": "^TNX", "name": "US-Rendite 10J (%)", "group": "rates", "delta_style": "neutral"},
-    {"symbol": "DX-Y.NYB", "name": "Dollar-Index (DXY)", "group": "rates", "delta_style": "neutral"},
+    {"symbol": "^MOVE", "name": "MOVE Index (bond volatility)", "group": "rates", "delta_style": "inverse"},
+    {"symbol": "^TNX", "name": "US 10Y Treasury Yield (%)", "group": "rates", "delta_style": "neutral"},
+    {"symbol": "DX-Y.NYB", "name": "US Dollar Index (DXY)", "group": "rates", "delta_style": "neutral"},
     {"symbol": "GC=F", "name": "Gold (USD/oz)", "group": "commodities"},
-    {"symbol": "CL=F", "name": "WTI Rohöl (USD)", "group": "commodities"},
+    {"symbol": "CL=F", "name": "WTI Crude Oil (USD)", "group": "commodities"},
     {"symbol": "BTC-USD", "name": "Bitcoin (USD)", "group": "commodities"},
     {"symbol": "ETH-USD", "name": "Ethereum (USD)", "group": "commodities"},
 ]
@@ -51,7 +52,34 @@ MARKET_SYMBOLS = [
 # Computed indicator: 10-year minus 3-month treasury yield (classic
 # recession signal when negative). Built from two Yahoo series because
 # FRED's T10Y3M endpoint is unreliable without an API key.
-YIELD_CURVE = {"symbol": "10Y-3M", "name": "Zinskurve 10J − 3M (Pp.)", "group": "rates"}
+YIELD_CURVE = {
+    "symbol": "10Y-3M",
+    "name": "Yield Curve 10Y-3M (pp)",
+    "group": "rates",
+    "delta_style": "neutral",
+    "no_pct": True,
+}
+
+# Yahoo range/interval per selectable horizon. 1W/1M/3M/1Y are sliced
+# client-side from the daily series; only these three need fetching.
+SERIES_SPECS = [
+    ("intraday", "1d", "15m"),
+    ("daily", "1y", "1d"),
+    ("weekly", "5y", "1wk"),
+]
+
+# CNN's official 7 components. The API also exposes market_momentum_sp500 and
+# market_volatility_vix as near-duplicate raw variants of the sp125/vix_50
+# keys below (same score/rating) - those are skipped to avoid redundancy.
+CNN_COMPONENTS = [
+    ("market_momentum_sp125", "Market Momentum (S&P 500 vs. 125-day avg)"),
+    ("stock_price_strength", "Stock Price Strength (52-week highs & lows)"),
+    ("stock_price_breadth", "Stock Price Breadth (advancing vs. declining volume)"),
+    ("put_call_options", "Put & Call Options (5-day ratio)"),
+    ("market_volatility_vix_50", "Market Volatility (VIX vs. 50-day avg)"),
+    ("junk_bond_demand", "Junk Bond Demand (yield spread)"),
+    ("safe_haven_demand", "Safe Haven Demand (stocks vs. bonds)"),
+]
 
 
 def http_get(url, timeout=15, headers=None):
@@ -69,46 +97,85 @@ def load_previous():
     return {}
 
 
-def fetch_market_index(symbol):
-    """Last ~30 daily closes from Yahoo Finance's chart API (no API key needed)."""
+def fetch_chart(symbol, rng, interval):
+    """One Yahoo chart series as parallel timestamp/close arrays."""
     encoded = urllib.parse.quote(symbol)
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range=1mo&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range={rng}&interval={interval}"
     payload = json.loads(http_get(url))
     result = (payload.get("chart") or {}).get("result") or []
     if not result:
-        raise ValueError(f"no data for {symbol}")
-    meta = result[0].get("meta", {})
-    quote = result[0]["indicators"]["quote"][0]
-    timestamps = result[0].get("timestamp", [])
-    closes = [c for c in quote.get("close", []) if c is not None]
-    if len(closes) < 2:
-        raise ValueError(f"not enough rows for {symbol}")
-    last = meta.get("regularMarketPrice", closes[-1])
+        raise ValueError(f"no chart data for {symbol} {rng}")
+    res = result[0]
+    quote = res["indicators"]["quote"][0]
+    pairs = [
+        (t, c)
+        for t, c in zip(res.get("timestamp") or [], quote.get("close") or [])
+        if c is not None
+    ]
+    if len(pairs) < 2:
+        raise ValueError(f"not enough rows for {symbol} {rng}")
+    return res.get("meta", {}), {
+        "t": [p[0] for p in pairs],
+        "c": [round(p[1], 3) for p in pairs],
+    }
+
+
+def fetch_market_series(symbol):
+    """Daily series is mandatory; intraday/weekly are best-effort extras."""
+    meta, daily = fetch_chart(symbol, "1y", "1d")
+    series = {"daily": daily}
+    for key, rng, interval in SERIES_SPECS:
+        if key == "daily":
+            continue
+        try:
+            _, series[key] = fetch_chart(symbol, rng, interval)
+        except Exception as exc:
+            print(f"[warn] {key} series failed for {symbol}: {exc}", file=sys.stderr)
+    closes = daily["c"]
+    last = meta.get("regularMarketPrice") or closes[-1]
     prev = closes[-2]
     change_pct = (last - prev) / prev * 100 if prev else None
-    last_date = datetime.fromtimestamp(timestamps[-1], tz=timezone.utc).date().isoformat() if timestamps else None
     return {
         "price": round(last, 2),
         "change_pct": round(change_pct, 2) if change_pct is not None else None,
-        "date": last_date,
-        "history": [round(c, 2) for c in closes],
+        "date": datetime.fromtimestamp(daily["t"][-1], tz=timezone.utc).date().isoformat(),
+        "series": series,
+    }
+
+
+def _spread_series(long_s, short_s):
+    """Elementwise long-short, aligned by timestamp (tail-zip fallback)."""
+    short_map = dict(zip(short_s["t"], short_s["c"]))
+    t, c = [], []
+    for ts, cl in zip(long_s["t"], long_s["c"]):
+        cs = short_map.get(ts)
+        if cs is not None:
+            t.append(ts)
+            c.append(round(cl - cs, 3))
+    if len(t) >= 10:
+        return {"t": t, "c": c}
+    n = min(len(long_s["t"]), len(short_s["t"]))
+    return {
+        "t": long_s["t"][-n:],
+        "c": [round(a - b, 3) for a, b in zip(long_s["c"][-n:], short_s["c"][-n:])],
     }
 
 
 def fetch_yield_curve():
-    """10Y minus 3M treasury yield, in percentage points."""
-    long_end = fetch_market_index("^TNX")
-    short_end = fetch_market_index("^IRX")
-    n = min(len(long_end["history"]), len(short_end["history"]))
-    history = [
-        round(l - s, 2)
-        for l, s in zip(long_end["history"][-n:], short_end["history"][-n:])
-    ]
+    """10Y minus 3M treasury yield, in percentage points. No intraday
+    variant: the two Yahoo series stamp intraday bars inconsistently."""
+    long_ = fetch_market_series("^TNX")
+    short = fetch_market_series("^IRX")
+    series = {}
+    for key in ("daily", "weekly"):
+        if long_["series"].get(key) and short["series"].get(key):
+            series[key] = _spread_series(long_["series"][key], short["series"][key])
+    daily = series["daily"]
     return {
-        "price": round(long_end["price"] - short_end["price"], 2),
+        "price": round(daily["c"][-1], 2),
         "change_pct": None,
-        "date": long_end["date"],
-        "history": history,
+        "date": long_["date"],
+        "series": series,
     }
 
 
@@ -118,7 +185,7 @@ def fetch_markets(previous):
     for item in MARKET_SYMBOLS:
         symbol = item["symbol"]
         try:
-            fetched = fetch_market_index(symbol)
+            fetched = fetch_market_series(symbol)
             result.append({**item, **fetched, "stale": False})
         except Exception as exc:
             print(f"[warn] market fetch failed for {symbol}: {exc}", file=sys.stderr)
@@ -132,25 +199,28 @@ def fetch_markets(previous):
         print(f"[warn] yield curve fetch failed: {exc}", file=sys.stderr)
         fallback = prev_markets.get(YIELD_CURVE["symbol"])
         if fallback:
-            result.append({**fallback, "group": YIELD_CURVE["group"], "stale": True})
+            result.append({**fallback, **YIELD_CURVE, "stale": True})
 
     return result
 
 
 def fetch_crypto_fear_greed(previous):
     try:
-        text = http_get("https://api.alternative.me/fng/?limit=30")
+        text = http_get("https://api.alternative.me/fng/?limit=365")
         payload = json.loads(text)
         entries = payload.get("data", [])
         if not entries:
             raise ValueError("empty crypto F&G response")
         latest = entries[0]
-        history = [int(e["value"]) for e in reversed(entries)]
+        ordered = list(reversed(entries))
         return {
             "value": int(latest["value"]),
             "rating": latest["value_classification"],
             "timestamp": latest["timestamp"],
-            "history": history,
+            "history": {
+                "t": [int(e["timestamp"]) for e in ordered],
+                "v": [int(e["value"]) for e in ordered],
+            },
             "stale": False,
         }
     except Exception as exc:
@@ -161,18 +231,13 @@ def fetch_crypto_fear_greed(previous):
         return None
 
 
-# CNN's official 7 components. The API also exposes market_momentum_sp500 and
-# market_volatility_vix as near-duplicate raw variants of the sp125/vix_50
-# keys below (same score/rating) - those are skipped to avoid redundancy.
-CNN_COMPONENTS = [
-    ("market_momentum_sp125", "Marktdynamik (S&P 500 vs. 125-Tage-Linie)"),
-    ("stock_price_strength", "Kursstärke (Hoch/Tief-Verhältnis)"),
-    ("stock_price_breadth", "Marktbreite (Handelsvolumen)"),
-    ("put_call_options", "Put/Call-Verhältnis"),
-    ("market_volatility_vix_50", "Volatilität (VIX vs. 50-Tage-Linie)"),
-    ("junk_bond_demand", "Nachfrage nach Ramsch-Anleihen"),
-    ("safe_haven_demand", "Nachfrage nach sicheren Häfen"),
-]
+def _cnn_history(node):
+    """CNN chart points ({x: ms, y: value}) as parallel arrays in seconds."""
+    points = (node or {}).get("data") or []
+    return {
+        "t": [int(p["x"] / 1000) for p in points],
+        "v": [round(float(p["y"]), 3) for p in points],
+    }
 
 
 def fetch_cnn_fear_greed(previous):
@@ -182,7 +247,7 @@ def fetch_cnn_fear_greed(previous):
             headers=CNN_HEADERS,
         )
         payload = json.loads(text)
-        fg = payload.get("fear_and_greed") or payload.get("fear_and_greed_historical", {})
+        fg = payload.get("fear_and_greed") or {}
         score = fg.get("score")
         rating = fg.get("rating")
         if score is None:
@@ -198,6 +263,10 @@ def fetch_cnn_fear_greed(previous):
                 "label": label,
                 "value": round(float(comp["score"])),
                 "rating": (comp.get("rating") or "").title(),
+                # Note: per-component history is the raw underlying metric
+                # (e.g. S&P level, yield spread), not the 0-100 score -
+                # that's all the API provides, and it's what CNN charts too.
+                "history": _cnn_history(comp),
             })
 
         return {
@@ -208,6 +277,7 @@ def fetch_cnn_fear_greed(previous):
             "previous_month": fg.get("previous_1_month"),
             "previous_year": fg.get("previous_1_year"),
             "timestamp": fg.get("timestamp"),
+            "history": _cnn_history(payload.get("fear_and_greed_historical")),
             "components": components,
             "stale": False,
         }
@@ -230,8 +300,11 @@ def main():
         "markets": fetch_markets(previous),
     }
     DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    DATA_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"Wrote {DATA_PATH}")
+    DATA_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    print(f"Wrote {DATA_PATH} ({DATA_PATH.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":

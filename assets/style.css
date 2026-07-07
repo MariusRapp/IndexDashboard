@@ -81,12 +81,74 @@ body {
   padding: 0 4px;
 }
 
+/* ---------- Controls (range + grid) ---------- */
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  padding: 0 4px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-card);
+}
+
+.segmented button {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.segmented button:hover {
+  background: var(--gridline);
+}
+
+.segmented button.active {
+  background: var(--series-1);
+  color: #fff;
+  font-weight: 600;
+}
+
+.toggle-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-card);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  background: var(--gridline);
+}
+
+.toggle-btn[aria-pressed="true"] {
+  background: var(--series-1);
+  border-color: var(--series-1);
+  color: #fff;
+  font-weight: 600;
+}
+
 /* ---------- Stat tiles (market indices) ---------- */
 
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
+  align-items: start;
 }
 
 .stat-tile {
@@ -95,6 +157,7 @@ body {
   border-radius: 10px;
   padding: 14px 16px;
   min-width: 0;
+  position: relative;
 }
 
 .stat-tile .label {
@@ -103,6 +166,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding-right: 26px;
 }
 
 .stat-tile .value {
@@ -140,6 +204,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
+  align-items: start;
 }
 
 .meter-card {
@@ -147,6 +212,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 18px 18px 16px;
+  position: relative;
 }
 
 .meter-card .meter-title {
@@ -233,6 +299,165 @@ body {
   margin-top: 10px;
 }
 
+/* ---------- Expand button & panel ---------- */
+
+.expand-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.expand-btn:hover {
+  background: var(--gridline);
+  color: var(--text-primary);
+}
+
+.expand-btn svg {
+  transition: transform 0.25s ease;
+}
+
+.expand-btn.open svg {
+  transform: rotate(180deg);
+}
+
+.expand-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+
+.expand-panel > .expand-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.expand-panel.open {
+  grid-template-rows: 1fr;
+}
+
+/* An expanded tile takes the full grid row so its chart is readable */
+.stat-tile:has(.expand-panel.open),
+.mini-meter-card:has(.expand-panel.open) {
+  grid-column: 1 / -1;
+}
+
+/* ---------- Full line chart (inside expand panels) ---------- */
+
+.chart {
+  position: relative;
+  margin-top: 12px;
+  touch-action: pan-y;
+}
+
+.chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-text {
+  font-size: 11px;
+  fill: var(--text-muted);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.chart-crosshair {
+  position: absolute;
+  width: 1px;
+  background: var(--text-muted);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.chart-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--series-1);
+  border: 2px solid var(--surface-card);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.chart-tip {
+  position: absolute;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  z-index: 2;
+}
+
+.chart-caption {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* ---------- Sparkline grid overlay ---------- */
+
+.spark-wrap {
+  position: relative;
+  margin-top: 8px;
+}
+
+.spark-wrap .sparkline {
+  margin-top: 0;
+}
+
+.spark-wrap.grid-on {
+  margin-top: 14px;
+  margin-bottom: 10px;
+}
+
+.spark-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gridline);
+}
+
+.spark-ref {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--text-muted);
+  opacity: 0.5;
+}
+
+.spark-max,
+.spark-min {
+  position: absolute;
+  right: 0;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1;
+  background: var(--surface-card);
+  padding-left: 3px;
+}
+
+.spark-max { top: -8px; }
+.spark-min { bottom: -8px; }
+
 .loading, .error {
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -247,6 +472,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
+  align-items: start;
 }
 
 .mini-meter-card {
@@ -254,12 +480,14 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
+  position: relative;
 }
 
 .mini-meter-card .mini-meter-label {
   font-size: 0.78rem;
   color: var(--text-secondary);
   min-height: 2.1em;
+  padding-right: 26px;
 }
 
 .mini-meter-card .mini-meter-value-row {
