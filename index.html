@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Index Dashboard</title>
+<meta name="description" content="Marktindizes und Sentiment-Indikatoren (Fear &amp; Greed) auf einen Blick.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="page-header">
+  <h1>Index Dashboard</h1>
+  <p class="subtitle">Marktindizes &amp; Stimmungsindikatoren</p>
+</header>
+
+<main>
+  <section class="section" aria-labelledby="fg-heading">
+    <h2 id="fg-heading">Fear &amp; Greed</h2>
+    <div class="meter-grid" id="fear-greed-grid">
+      <p class="loading">Lade Daten…</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="markets-heading">
+    <h2 id="markets-heading">Marktindizes</h2>
+    <div class="stat-grid" id="markets-grid">
+      <p class="loading">Lade Daten…</p>
+    </div>
+  </section>
+</main>
+
+<footer class="page-footer">
+  <p id="updated-at">—</p>
+  <p class="sources">Quellen: CNN Fear &amp; Greed Index, alternative.me (Crypto Fear &amp; Greed), Yahoo Finance. Aktualisierung alle 3 Stunden per GitHub Actions.</p>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

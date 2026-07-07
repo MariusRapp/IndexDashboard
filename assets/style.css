@@ -1,0 +1,275 @@
+:root {
+  --surface-page:   #f9f9f7;
+  --surface-card:   #fcfcfb;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+  --gridline:       #e1e0d9;
+  --border:         rgba(11, 11, 11, 0.10);
+
+  --delta-good:     #006300;
+  --delta-bad:      #d03b3b;
+
+  --status-good:     #0ca30c;
+  --status-warning:  #fab219;
+  --status-serious:  #ec835a;
+  --status-critical: #d03b3b;
+
+  --series-1: #2a78d6; /* sparkline */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-page:   #0d0d0d;
+    --surface-card:   #1a1a19;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --border:         rgba(255, 255, 255, 0.10);
+
+    --delta-good:     #0ca30c;
+    --delta-bad:      #e66767;
+
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-serious:  #ec835a;
+    --status-critical: #e66767;
+
+    --series-1: #3987e5;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.4;
+  padding: 0 16px 32px;
+}
+
+.page-header {
+  padding: 24px 4px 8px;
+}
+
+.page-header h1 {
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  margin: 0 0 2px;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.section {
+  margin-top: 28px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 12px;
+  padding: 0 4px;
+}
+
+/* ---------- Stat tiles (market indices) ---------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.stat-tile {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.stat-tile .label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-tile .value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-tile .delta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-tile .delta.up { color: var(--delta-good); }
+.stat-tile .delta.down { color: var(--delta-bad); }
+.stat-tile .delta.flat { color: var(--text-muted); }
+
+.stat-tile .sparkline {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  height: 32px;
+}
+
+.stat-tile .stale-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ---------- Fear & Greed meters ---------- */
+
+.meter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.meter-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+
+.meter-card .meter-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.meter-card .meter-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.meter-card .meter-value {
+  font-size: 2.1rem;
+  font-weight: 600;
+}
+
+.meter-card .meter-rating {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.meter-track-wrap {
+  position: relative;
+  margin-top: 14px;
+  height: 10px;
+}
+
+.meter-track {
+  height: 10px;
+  border-radius: 999px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    var(--status-critical) 0%,
+    var(--status-serious) 25%,
+    var(--status-warning) 50%,
+    var(--status-warning) 62%,
+    var(--status-good) 100%
+  );
+}
+
+.meter-pointer {
+  position: absolute;
+  top: -4px;
+  width: 3px;
+  height: 18px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transform: translateX(-1.5px);
+}
+
+.meter-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.meter-compare {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 6px;
+}
+
+.meter-compare div span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.meter-card .stale-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.loading, .error {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0 4px;
+}
+
+.error { color: var(--delta-bad); }
+
+/* ---------- Footer ---------- */
+
+.page-footer {
+  margin-top: 32px;
+  padding: 16px 4px 0;
+  border-top: 1px solid var(--gridline);
+}
+
+.page-footer p {
+  margin: 4px 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Responsive tweaks ---------- */
+
+@media (max-width: 420px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .meter-card .meter-value { font-size: 1.8rem; }
+}
+
+@media (min-width: 900px) {
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .page-header, .page-footer {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
