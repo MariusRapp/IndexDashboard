@@ -1,0 +1,1 @@
+{"updated_at":"2026-11-19T11:42:44+00:00","fear_greed":{"cnn":{"value":27,"rating":"Fear"},"crypto":{"value":10,"rating":"Extreme Fear"}},"markets":[{"symbol":"^GSPC","name":"S&P 500","price":7323.63,"change_pct_1d":-0.23},{"symbol":"^GDAXI","name":"DAX","price":25815.86,"change_pct_1d":0.31},{"symbol":"BTC-USD","name":"Bitcoin (USD)","price":63820.99,"change_pct_1d":1.32}]}

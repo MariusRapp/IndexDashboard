@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "latest.json"
+SUMMARY_PATH = DATA_PATH.with_name("summary.json")
+SUMMARY_SYMBOLS = ["^GSPC", "^GDAXI", "BTC-USD"]
 
 BROWSER_HEADERS = {
     "User-Agent": (
@@ -289,7 +291,51 @@ def fetch_cnn_fear_greed(previous):
         return None
 
 
+def build_summary(data):
+    """Small digest for the hub: F&G values and headline markets (no network)."""
+    def fg(node):
+        node = node or {}
+        return {"value": node.get("value"), "rating": node.get("rating")}
+
+    by_symbol = {m.get("symbol"): m for m in data.get("markets", [])}
+    markets = []
+    for sym in SUMMARY_SYMBOLS:
+        m = by_symbol.get(sym)
+        if not m:
+            continue
+        closes = ((m.get("series") or {}).get("daily") or {}).get("c") or []
+        change = None
+        if len(closes) >= 2 and closes[-2]:
+            change = round((closes[-1] / closes[-2] - 1) * 100, 2)
+        markets.append({
+            "symbol": sym,
+            "name": m.get("name"),
+            "price": m.get("price"),
+            "change_pct_1d": change,
+        })
+    return {
+        "updated_at": data.get("updated_at"),
+        "fear_greed": {
+            "cnn": fg(data.get("fear_greed", {}).get("cnn")),
+            "crypto": fg(data.get("fear_greed", {}).get("crypto")),
+        },
+        "markets": markets,
+    }
+
+
+def write_summary(data):
+    SUMMARY_PATH.write_text(
+        json.dumps(build_summary(data), ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    print(f"Wrote {SUMMARY_PATH}")
+
+
 def main():
+    if "--summary-only" in sys.argv:
+        # No network: derive summary.json from the existing latest.json.
+        write_summary(json.loads(DATA_PATH.read_text(encoding="utf-8")))
+        return
     previous = load_previous()
     data = {
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -305,6 +351,7 @@ def main():
         encoding="utf-8",
     )
     print(f"Wrote {DATA_PATH} ({DATA_PATH.stat().st_size // 1024} KB)")
+    write_summary(data)
 
 
 if __name__ == "__main__":

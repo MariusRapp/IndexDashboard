@@ -1,3 +1,5 @@
+import { initKit, setStatus, formatStamp, toast, bindSeg } from "../kit/kit.js";
+
 const DATA_URL = "data/latest.json";
 const RANGE_DAYS = { "1W": 7, "1M": 31, "3M": 92 };
 
@@ -5,14 +7,15 @@ const state = { range: "1M", grid: false, data: null, expanded: new Set() };
 const chartGeometry = new Map(); // chart id -> data + layout for hover math
 const expandBuilders = new Map(); // panel id -> () => chart html
 
-function ratingColorVar(rating) {
+// Kit chip variant per rating; the rating text always stays visible (never color alone).
+function ratingChip(rating) {
   const key = (rating || "").toLowerCase();
-  if (key.includes("extreme fear")) return "--status-critical";
-  if (key === "fear") return "--status-serious";
-  if (key.includes("greed")) return "--status-good";
-  if (key === "neutral") return "--status-warning";
-  return "--status-warning";
+  if (key.includes("extreme fear")) return "down";
+  if (key.includes("fear")) return "warn";
+  if (key.includes("greed")) return "up";
+  return "";
 }
+const STALE_HOURS = 4;
 
 function formatNumber(value, opts = {}) {
   if (value === null || value === undefined) return "—";
@@ -55,7 +58,7 @@ function buildSparkline(history) {
     })
     .join(" ");
   return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
-    <polyline points="${points}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+    <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
   </svg>`;
 }
 
@@ -106,7 +109,7 @@ function formatXLabel(ts, spanSeconds) {
 }
 
 function buildLineChart(id, t, v, opts = {}) {
-  if (!t || !v || v.length < 2) return `<p class="loading">Not enough data</p>`;
+  if (!t || !v || v.length < 2) return `<p class="loading muted">Not enough data</p>`;
   const W = 640, H = 220, L = 48, R = 14, T = 12, B = 26;
   const plotW = W - L - R, plotH = H - T - B;
 
@@ -129,7 +132,7 @@ function buildLineChart(id, t, v, opts = {}) {
 
   const grid = ticks
     .map(
-      (tick) => `<line x1="${L}" y1="${y(tick).toFixed(1)}" x2="${W - R}" y2="${y(tick).toFixed(1)}" stroke="var(--gridline)" stroke-width="1"/>
+      (tick) => `<line x1="${L}" y1="${y(tick).toFixed(1)}" x2="${W - R}" y2="${y(tick).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>
       <text x="${L - 6}" y="${(y(tick) + 3.5).toFixed(1)}" text-anchor="end" class="chart-text">${formatNumber(tick, { maximumFractionDigits: 2 })}</text>`
     )
     .join("");
@@ -152,12 +155,12 @@ function buildLineChart(id, t, v, opts = {}) {
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="History chart">
       ${grid}
       ${xLabels}
-      <polyline points="${points}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-      <circle cx="${lastX}" cy="${lastY}" r="4" fill="var(--series-1)" stroke="var(--surface-card)" stroke-width="2"/>
+      <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lastX}" cy="${lastY}" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
     </svg>
     <div class="chart-crosshair" hidden></div>
     <div class="chart-dot" hidden></div>
-    <div class="chart-tip" hidden></div>
+    <div class="tip chart-tip" hidden></div>
   </div>${opts.caption ? `<div class="chart-caption">${opts.caption}</div>` : ""}`;
 }
 
@@ -191,15 +194,13 @@ function bindChart(container) {
     const when = span < 3 * 86400
       ? dt.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
       : dt.toLocaleDateString("de-DE");
-    let text = `${when} · ${formatNumber(geo.v[i], { maximumFractionDigits: 2 })}${geo.unit ? " " + geo.unit : ""}`;
-    if (geo.showPct && geo.v[0]) {
-      text += ` · ${formatSignedPct((geo.v[i] / geo.v[0] - 1) * 100)}`;
-    }
-    tip.textContent = text;
+    tip.innerHTML = `<div class="tip-time">${when}</div><div class="tip-row"><b>${formatNumber(geo.v[i], { maximumFractionDigits: 2 })}${geo.unit ? " " + geo.unit : ""}</b>${
+      geo.showPct && geo.v[0] ? `<span class="${geo.v[i] >= geo.v[0] ? "up-t" : "down-t"}">${formatSignedPct((geo.v[i] / geo.v[0] - 1) * 100)}</span>` : ""
+    }</div>`;
     tip.hidden = cross.hidden = dot.hidden = false;
     const tw = tip.offsetWidth;
     tip.style.left = `${Math.max(4, Math.min(rect.width - tw - 4, xpx - tw / 2)).toFixed(1)}px`;
-    tip.style.top = `${Math.max(2, ypx - 34).toFixed(1)}px`;
+    tip.style.top = `${Math.max(2, ypx - tip.offsetHeight - 10).toFixed(1)}px`;
   };
 
   svg.addEventListener("pointermove", move);
@@ -212,8 +213,8 @@ function bindChart(container) {
 /* ---------- expand / collapse ---------- */
 
 function expandButton(id) {
-  return `<button type="button" class="expand-btn" data-id="${id}" aria-expanded="false" title="Show history">
-    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  return `<button type="button" class="fold expand-btn" data-id="${id}" aria-expanded="false" aria-label="Show history" title="Show history">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>`;
 }
 
@@ -223,6 +224,8 @@ function applyExpansion(id, open) {
   if (!btn || !panel) return;
   btn.classList.toggle("open", open);
   btn.setAttribute("aria-expanded", String(open));
+  btn.title = open ? "Hide history" : "Show history";
+  btn.setAttribute("aria-label", btn.title);
   panel.classList.toggle("open", open);
   const card = btn.closest(".stat-tile, .meter-card, .mini-meter-card");
   if (card) card.classList.toggle("expanded", open);
@@ -306,11 +309,11 @@ function renderMarketTile(market) {
   }
 
   return `
-    <div class="stat-tile">
+    <div class="card stat-tile">
       ${expandable ? expandButton(id) : ""}
       <div class="label">${market.name}</div>
       <div class="value">${formatNumber(market.price, { maximumFractionDigits: 2 })}</div>
-      <div class="delta ${cls}">${deltaHtml}</div>
+      <div class="delta ${cls}">${cls === "up" ? "▲ " : cls === "down" ? "▼ " : ""}${deltaHtml}</div>
       ${sparklineWithGrid(closes)}
       ${market.stale ? `<div class="stale-note">Last known value (latest fetch failed)</div>` : ""}
       ${expandable ? `<div class="expand-panel" id="panel-${id}"><div class="expand-inner"></div></div>` : ""}
@@ -331,9 +334,9 @@ function meterTrack(value, size) {
 
 function renderMeterCard(title, fg, id) {
   if (!fg) {
-    return `<div class="meter-card"><div class="meter-title">${title}</div><p class="error">No data available</p></div>`;
+    return `<div class="card meter-card"><div class="meter-title">${title}</div><p class="error">No data available</p></div>`;
   }
-  const colorVar = ratingColorVar(fg.rating);
+  const chip = ratingChip(fg.rating);
 
   let compareHtml = "";
   if (fg.previous_close !== undefined) {
@@ -364,12 +367,12 @@ function renderMeterCard(title, fg, id) {
   }
 
   return `
-    <div class="meter-card">
+    <div class="card meter-card">
       ${expandable ? expandButton(id) : ""}
       <div class="meter-title">${title}</div>
       <div class="meter-value-row">
         <span class="meter-value">${formatNumber(fg.value)}</span>
-        <span class="meter-rating" style="background: var(${colorVar})">${fg.rating || "—"}</span>
+        <span class="chip lg ${chip}">${fg.rating || "—"}</span>
       </div>
       ${meterTrack(fg.value)}
       <div class="meter-scale-labels">
@@ -386,7 +389,7 @@ function renderMeterCard(title, fg, id) {
 
 function renderMiniMeter(component) {
   const id = "comp-" + sanitizeId(component.key);
-  const colorVar = ratingColorVar(component.rating);
+  const chip = ratingChip(component.rating);
 
   const expandable = component.history && component.history.t && component.history.t.length > 1;
   if (expandable) {
@@ -398,12 +401,12 @@ function renderMiniMeter(component) {
   }
 
   return `
-    <div class="mini-meter-card">
+    <div class="card mini-meter-card">
       ${expandable ? expandButton(id) : ""}
       <div class="mini-meter-label">${component.label}</div>
       <div class="mini-meter-value-row">
         <span class="mini-meter-value">${formatNumber(component.value)}</span>
-        <span class="mini-meter-rating" style="background: var(${colorVar})">${component.rating || "—"}</span>
+        <span class="chip ${chip}">${component.rating || "—"}</span>
       </div>
       ${meterTrack(component.value, "mini")}
       ${expandable ? `<div class="expand-panel" id="panel-${id}"><div class="expand-inner"></div></div>` : ""}
@@ -415,15 +418,38 @@ function renderMiniMeter(component) {
 
 function renderUpdatedAt(iso) {
   const el = document.getElementById("updated-at");
-  if (!iso) {
+  const date = iso ? new Date(iso) : null;
+  if (!date || isNaN(date)) {
     el.textContent = "Last updated: unknown";
+    setStatus("stale", "Updated: unknown");
     return;
   }
-  const date = new Date(iso);
   el.textContent = `Last updated: ${date.toLocaleString("de-DE", {
     dateStyle: "medium",
     timeStyle: "short",
   })}`;
+  updateFreshness();
+}
+
+// Top-bar status: live while the data is at most STALE_HOURS old, then "stale".
+// Offline (cached data): banner "Offline . Updated ..." (the kit status itself says "Offline").
+function updateFreshness() {
+  const iso = state.data && state.data.updated_at;
+  const date = iso ? new Date(iso) : null;
+  if (!date || isNaN(date)) return;
+  const stale = (Date.now() - date.getTime()) / 3600000 > STALE_HOURS;
+  const stamp = formatStamp(date, "en");
+  setStatus(stale ? "stale" : "live", stale ? `${stamp} · stale` : stamp);
+  const banner = document.getElementById("banner");
+  if (navigator.onLine === false) {
+    banner.innerHTML = `<span aria-hidden="true">◆</span><span><b>Offline</b> · ${stamp} (last saved data)</span>`;
+    banner.hidden = false;
+  } else if (stale) {
+    banner.innerHTML = `<span aria-hidden="true">◆</span><span><b>Data is stale.</b> ${stamp}; the scheduled refresh may have failed.</span>`;
+    banner.hidden = false;
+  } else {
+    banner.hidden = true;
+  }
 }
 
 function renderFearGreed(data) {
@@ -456,6 +482,8 @@ async function loadDashboard() {
     renderUpdatedAt(data.updated_at);
     restoreExpanded();
   } catch (err) {
+    setStatus("err", "Load failed");
+    toast("Could not load data", err.message);
     document.getElementById("markets-grid").innerHTML =
       `<p class="error">Could not load data: ${err.message}</p>`;
     document.getElementById("fear-greed-grid").innerHTML = "";
@@ -463,26 +491,29 @@ async function loadDashboard() {
   }
 }
 
-document.getElementById("range-select").addEventListener("click", (ev) => {
-  const btn = ev.target.closest("button[data-range]");
-  if (!btn || btn.dataset.range === state.range) return;
-  state.range = btn.dataset.range;
-  document.querySelectorAll("#range-select button").forEach((b) => {
-    b.classList.toggle("active", b.dataset.range === state.range);
-  });
+bindSeg(document.getElementById("range-select"), (value) => {
+  state.range = value;
   if (state.data) {
     renderMarkets(state.data);
     restoreExpanded();
   }
 });
 
-document.getElementById("grid-toggle").addEventListener("click", (ev) => {
-  state.grid = !state.grid;
-  ev.currentTarget.setAttribute("aria-pressed", String(state.grid));
+document.getElementById("grid-toggle").addEventListener("change", (ev) => {
+  state.grid = ev.currentTarget.checked;
   if (state.data) {
     renderMarkets(state.data);
     restoreExpanded();
   }
 });
+
+// Chart colors are CSS variables inside the SVG, so a theme change needs no redraw.
+initKit({ app: "index", lang: "en" });
+addEventListener("kit:online", () => updateFreshness());
+setInterval(updateFreshness, 60000);
 
 loadDashboard();
+
+if ("serviceWorker" in navigator) {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
