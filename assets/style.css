@@ -1,580 +1,102 @@
-:root {
-  --surface-page:   #f9f9f7;
-  --surface-card:   #fcfcfb;
-  --text-primary:   #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted:     #898781;
-  --gridline:       #e1e0d9;
-  --border:         rgba(11, 11, 11, 0.10);
-
-  --delta-good:     #006300;
-  --delta-bad:      #d03b3b;
-
-  --status-good:     #0ca30c;
-  --status-warning:  #fab219;
-  --status-serious:  #ec835a;
-  --status-critical: #d03b3b;
-
-  --series-1: #2a78d6; /* sparkline */
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface-page:   #0d0d0d;
-    --surface-card:   #1a1a19;
-    --text-primary:   #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted:     #898781;
-    --gridline:       #2c2c2a;
-    --border:         rgba(255, 255, 255, 0.10);
-
-    --delta-good:     #0ca30c;
-    --delta-bad:      #e66767;
-
-    --status-good:     #0ca30c;
-    --status-warning:  #fab219;
-    --status-serious:  #ec835a;
-    --status-critical: #e66767;
-
-    --series-1: #3987e5;
-  }
-}
-
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--surface-page);
-  color: var(--text-primary);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.4;
-  padding: 0 16px 32px;
-}
-
-.page-header {
-  padding: 24px 4px 8px;
-}
-
-.page-header h1 {
-  font-size: clamp(1.4rem, 4vw, 1.9rem);
-  margin: 0 0 2px;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.section {
-  margin-top: 28px;
-}
-
-.section h2 {
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin: 0 0 12px;
-  padding: 0 4px;
-}
-
-/* ---------- Controls (range + grid) ---------- */
-
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 0 0 12px;
-  padding: 0 4px;
-}
-
-.segmented {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--surface-card);
-}
-
-.segmented button {
-  background: transparent;
-  border: none;
-  padding: 6px 12px;
-  font: inherit;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.segmented button:hover {
-  background: var(--gridline);
-}
-
-.segmented button.active {
-  background: var(--series-1);
-  color: #fff;
-  font-weight: 600;
-}
-
-.toggle-btn {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-card);
-  padding: 6px 12px;
-  font: inherit;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.toggle-btn:hover {
-  background: var(--gridline);
-}
-
-.toggle-btn[aria-pressed="true"] {
-  background: var(--series-1);
-  border-color: var(--series-1);
-  color: #fff;
-  font-weight: 600;
-}
-
-/* ---------- Stat tiles (market indices) ---------- */
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  align-items: start;
-}
-
-.stat-tile {
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px 16px;
-  min-width: 0;
-  position: relative;
-}
-
-.stat-tile .label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 26px;
-}
-
-.stat-tile .value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-.stat-tile .delta {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-.stat-tile .delta.up { color: var(--delta-good); }
-.stat-tile .delta.down { color: var(--delta-bad); }
-.stat-tile .delta.flat { color: var(--text-muted); }
-
-.stat-tile .sparkline {
-  display: block;
-  margin-top: 8px;
-  width: 100%;
-  height: 32px;
-}
-
-.stat-tile .stale-note {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-/* ---------- Fear & Greed meters ---------- */
-
-.meter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
-  align-items: start;
-}
-
-.meter-card {
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 18px 18px 16px;
-  position: relative;
-}
-
-.meter-card .meter-title {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.meter-card .meter-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-.meter-card .meter-value {
-  font-size: 2.1rem;
-  font-weight: 600;
-}
-
-.meter-card .meter-rating {
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 2px 9px;
-  border-radius: 999px;
-  color: #fff;
-}
-
-.meter-track-wrap {
-  position: relative;
-  margin-top: 14px;
-  height: 10px;
-}
-
-.meter-track {
-  height: 10px;
-  border-radius: 999px;
-  width: 100%;
-  background: linear-gradient(
-    to right,
-    var(--status-critical) 0%,
-    var(--status-serious) 25%,
-    var(--status-warning) 50%,
-    var(--status-warning) 62%,
-    var(--status-good) 100%
-  );
-}
-
-.meter-pointer {
-  position: absolute;
-  top: -4px;
-  width: 3px;
-  height: 18px;
-  background: var(--text-primary);
-  border-radius: 2px;
-  transform: translateX(-1.5px);
-}
-
-.meter-scale-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 0.68rem;
-  color: var(--text-muted);
-}
-
-.meter-compare {
-  margin-top: 14px;
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: 6px;
-}
-
-.meter-compare div span {
-  display: block;
-  color: var(--text-muted);
-  font-size: 0.68rem;
-}
-
-.meter-card .stale-note {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 10px;
-}
-
-/* ---------- Expand button & panel ---------- */
-
-.expand-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
-
-.expand-btn:hover {
-  background: var(--gridline);
-  color: var(--text-primary);
-}
-
-.expand-btn svg {
-  transition: transform 0.25s ease;
-}
-
-.expand-btn.open svg {
-  transform: rotate(180deg);
-}
-
-.expand-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.28s ease;
-}
-
-.expand-panel > .expand-inner {
-  overflow: hidden;
-  min-height: 0;
-}
-
-.expand-panel.open {
-  grid-template-rows: 1fr;
-}
-
-/* An expanded tile takes the full grid row so its chart is readable;
-   the sparkline is redundant next to the big chart, so hide it.
-   The .expanded class is set by JS (more compatible than :has()). */
-.stat-tile.expanded,
-.mini-meter-card.expanded {
-  grid-column: 1 / -1;
-}
-
-.stat-tile.expanded .spark-wrap {
-  display: none;
-}
-
-/* ---------- Full line chart (inside expand panels) ---------- */
-
-.chart {
-  position: relative;
-  margin-top: 12px;
-  touch-action: pan-y;
-}
-
-.chart svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.chart-text {
-  font-size: 11px;
-  fill: var(--text-muted);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-.chart-crosshair {
-  position: absolute;
-  width: 1px;
-  background: var(--text-muted);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.chart-dot {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--series-1);
-  border: 2px solid var(--surface-card);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.chart-tip {
-  position: absolute;
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.72rem;
-  color: var(--text-primary);
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
-  z-index: 2;
-}
-
-.chart-caption {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-
-/* ---------- Sparkline grid overlay ---------- */
-
-.spark-wrap {
-  position: relative;
-  margin-top: 8px;
-}
-
-.spark-wrap .sparkline {
-  margin-top: 0;
-}
-
-.spark-wrap.grid-on {
-  margin-top: 14px;
-  margin-bottom: 10px;
-}
-
-.spark-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--gridline);
-}
-
-.spark-ref {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 0;
-  border-top: 1px dashed var(--text-muted);
-  opacity: 0.5;
-}
-
-.spark-max,
-.spark-min {
-  position: absolute;
-  right: 0;
-  font-size: 0.6rem;
-  color: var(--text-muted);
-  line-height: 1;
-  background: var(--surface-card);
-  padding-left: 3px;
-}
-
-.spark-max { top: -8px; }
-.spark-min { bottom: -8px; }
-
-.loading, .error {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  padding: 0 4px;
-}
-
-.error { color: var(--delta-bad); }
-
-/* ---------- Mini meters (Fear & Greed components) ---------- */
-
-.mini-meter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-  align-items: start;
-}
-
-.mini-meter-card {
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  position: relative;
-}
-
-.mini-meter-card .mini-meter-label {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  min-height: 2.1em;
-  padding-right: 26px;
-}
-
-.mini-meter-card .mini-meter-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.mini-meter-card .mini-meter-value {
-  font-size: 1.3rem;
-  font-weight: 600;
-}
-
-.mini-meter-card .mini-meter-rating {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 1px 7px;
-  border-radius: 999px;
-  color: #fff;
-}
-
-.mini-meter-track-wrap {
-  position: relative;
-  margin-top: 8px;
-  height: 8px;
-}
-
-.mini-meter-track {
-  height: 6px;
-  border-radius: 999px;
-  width: 100%;
-  background: linear-gradient(
-    to right,
-    var(--status-critical) 0%,
-    var(--status-serious) 25%,
-    var(--status-warning) 50%,
-    var(--status-warning) 62%,
-    var(--status-good) 100%
-  );
-}
-
-.mini-meter-pointer {
-  position: absolute;
-  top: -3px;
-  width: 2px;
-  height: 12px;
-  background: var(--text-primary);
-  border-radius: 2px;
-  transform: translateX(-1px);
-}
-
-/* ---------- Footer ---------- */
-
-.page-footer {
-  margin-top: 32px;
-  padding: 16px 4px 0;
-  border-top: 1px solid var(--gridline);
-}
-
-.page-footer p {
-  margin: 4px 0;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-/* ---------- Responsive tweaks ---------- */
-
-@media (max-width: 420px) {
-  .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .meter-card .meter-value { font-size: 1.8rem; }
-}
-
-@media (min-width: 900px) {
-  main {
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .page-header, .page-footer {
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+/* Index Dashboard: app-specific styles, loaded after kit/kit.css. Tint: teal (data-tint on <html>).
+   Colors come from kit tokens only (--accent, --up/--down, --warning, --grid, --ink-*). */
+
+:root { --wrap-max: 1180px; }
+.wrap { gap: 12px; }
+section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.section-title { margin: 14px 2px 0; }
+section:first-of-type .section-title { margin-top: 4px; }
+
+.loading, .error { font-size: 14px; color: var(--muted-text); padding: 0 4px; }
+.error { color: var(--down-text); }
+
+/* ---------- Page toolbar (range + sparkline switch), second row of the top bar ---------- */
+.topbar-tools { gap: 8px 16px; }
+.topbar-tools .toggle { min-height: 36px; }
+
+/* ---------- Grids ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 12px; align-items: start; }
+.meter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 12px; align-items: start; }
+.mini-meter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px; align-items: start; }
+.stat-grid > p, .meter-grid > p, .mini-meter-grid > p { grid-column: 1 / -1; }
+
+.stat-tile, .meter-card, .mini-meter-card { --pad: 16px; }
+.mini-meter-card { --pad: 14px; }
+
+/* ---------- Market tiles ---------- */
+.stat-tile .label, .meter-title, .mini-meter-label { font-size: 13px; font-weight: 500; color: var(--ink-2); padding-right: 30px; }
+.stat-tile .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-tile .value { font-family: var(--font-num); font-size: 26px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat-tile .delta { font-size: 14px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.delta.up { color: var(--up-text); }
+.delta.down { color: var(--down-text); }
+.delta.flat { color: var(--muted-text); }
+.stat-tile .sparkline { display: block; width: 100%; height: 34px; }
+.stale-note { font-size: 12px; color: var(--muted-text); margin-top: 8px; }
+.stale-note::before { content: "◆ "; color: var(--warning); }
+
+/* ---------- Fear & Greed gauges ----------
+   Same meaning as before: left = extreme fear, middle = neutral, right = greed. Colors are the kit's
+   --down / --warning / --up; the marker, the number and the rating chip carry the reading without color. */
+.meter-value-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 2px; }
+.meter-value { font-family: var(--font-num); font-size: 36px; font-weight: 650; letter-spacing: -.022em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.mini-meter-value-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
+.mini-meter-value { font-family: var(--font-num); font-size: 22px; font-weight: 650; letter-spacing: -.015em; font-variant-numeric: tabular-nums; }
+.mini-meter-label { min-height: 2.6em; font-size: 12px; line-height: 1.3; }
+
+.meter-track-wrap, .mini-meter-track-wrap { position: relative; margin-top: 14px; height: 10px; }
+.mini-meter-track-wrap { margin-top: 10px; height: 8px; }
+.meter-track, .mini-meter-track {
+  height: 100%; width: 100%; border-radius: 999px;
+  background: linear-gradient(to right, var(--down) 0%, var(--warning) 50%, var(--up) 100%);
+}
+.meter-pointer, .mini-meter-pointer {
+  position: absolute; top: -4px; width: 4px; height: 18px; border-radius: 2px; transform: translateX(-2px);
+  background: var(--ink-1); box-shadow: 0 0 0 2px var(--surface);
+}
+.mini-meter-pointer { top: -3px; width: 3px; height: 14px; transform: translateX(-1.5px); box-shadow: 0 0 0 1.5px var(--surface); }
+.meter-scale-labels { display: flex; justify-content: space-between; gap: 6px; margin-top: 8px; font-size: 11px; color: var(--muted-text); }
+.meter-compare { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
+.meter-compare > div { padding: 8px 10px; border-radius: 12px; background: var(--band); font-family: var(--font-num); font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.meter-compare span { display: block; font-family: var(--font); font-size: 11px; font-weight: 400; color: var(--muted-text); }
+
+/* ---------- Expand button (kit .fold look) and panel ---------- */
+.expand-btn.open svg { transform: rotate(180deg); }
+.expand-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s var(--spring); }
+.expand-panel > .expand-inner { overflow: hidden; min-height: 0; }
+.expand-panel.open { grid-template-rows: 1fr; }
+.stat-tile.expanded, .mini-meter-card.expanded, .meter-card.expanded { grid-column: 1 / -1; }
+.stat-tile.expanded .spark-wrap { display: none; }
+
+/* ---------- History chart ---------- */
+.chart { position: relative; margin-top: 12px; touch-action: pan-y; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart-text { font-size: 11px; fill: var(--muted-text); font-family: var(--font); }
+.chart-crosshair { position: absolute; width: 1px; background: var(--axis); pointer-events: none; }
+.chart-dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); transform: translate(-50%, -50%); pointer-events: none; }
+.chart-tip { min-width: 0; white-space: nowrap; }
+.chart-tip .tip-row { gap: 10px; }
+.chart-caption { font-size: 12px; color: var(--muted-text); margin-top: 6px; }
+
+/* ---------- Sparkline min/max overlay ---------- */
+.spark-wrap { position: relative; margin-top: 10px; }
+.spark-wrap .sparkline { margin-top: 0; }
+.spark-wrap.grid-on { margin-top: 16px; margin-bottom: 12px; }
+.spark-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--grid); }
+.spark-ref { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--axis); }
+.spark-max, .spark-min { position: absolute; right: 0; font-size: 10px; color: var(--muted-text); line-height: 1; background: var(--surface); padding-left: 3px; font-variant-numeric: tabular-nums; }
+.spark-max { top: -9px; }
+.spark-min { bottom: -9px; }
+
+/* ---------- Banner + footer ---------- */
+#banner { margin-bottom: 0; }
+.page-footer { margin-top: 12px; padding: 4px 4px 0; }
+.page-footer p { font-size: 12px; color: var(--muted-text); margin: 4px 0; }
+
+/* ---------- Phone ---------- */
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat-tile .value { font-size: 22px; }
+  .stat-tile { --pad: 14px; }
+  .topbar-tools { padding-bottom: 8px; }
 }
