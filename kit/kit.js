@@ -1,12 +1,12 @@
-/* dashboard-kit v1.0.0 (kit/VERSION), copied from Dashboard-hub/kit, do not edit here */
-// Dashboard-Kit 1.0.0 — the dashboards' shared chrome: theme, top bar, segmented thumbs, hub link, online state,
+/* dashboard-kit v1.1.0 (kit/VERSION), copied from Dashboard-hub/kit, do not edit here */
+// Dashboard-Kit 1.1.0 — the dashboards' shared chrome: theme, top bar, segmented thumbs, hub link, online state,
 // status, toast, sheets, folding and time stamps. ES module without dependencies.
 // Source: Dashboard-hub/kit. Copies in the app repos are never edited by hand: change the source, bump kit/VERSION,
 // run `node kit/tools/sync.mjs`.
 // Also runs pasted into an inline <script type="module"> next to app code (OptionSearch): every internal name starts
 // with _kit, nothing runs before a function is called, and globalThis.DashboardKit carries the whole API.
 
-export const KIT_VERSION = '1.0.0';
+export const KIT_VERSION = '1.1.0';
 export const HUB_URL = 'https://mariusrapp.github.io/Dashboard-hub/';
 
 // ── Strings (the kit's own labels) ───────────────────────────────────────────
@@ -244,7 +244,9 @@ function _kitStatusParts(el) {
 function _kitRenderStatus() {
   const off = document.documentElement.hasAttribute('data-offline');
   if (_kitStatus.state == null && !off) return;   // the app never called setStatus: its own markup stays
-  const state = off ? 'offline' : _kitStatus.state, text = off ? _kitT().offline : _kitStatus.text;
+  // offline after live/stale data: keep the data stamp visible ("Offline · Stand 19:54")
+  const stamp = (_kitStatus.state === 'live' || _kitStatus.state === 'stale') && _kitStatus.text ? ' · ' + _kitStatus.text : '';
+  const state = off ? 'offline' : _kitStatus.state, text = off ? _kitT().offline + stamp : _kitStatus.text;
   for (const el of document.querySelectorAll('[data-kit="status"]')) {
     const [dot, txt] = _kitStatusParts(el);
     if (off && _kitStatus.state == null && !_kitStatusSaved.has(el)) _kitStatusSaved.set(el, [dot.className, txt.textContent]);
@@ -460,6 +462,10 @@ function _kitObserve() {
 // ── All at once ──────────────────────────────────────────────────────────────
 // initKit({ app: 'index', lang: 'de', fold: true, onTheme: dark => redraw(), topbar: { watch: '#price' } })
 // Calling it again is harmless (listeners are only added once).
+/**
+ * @param {{ app?: string, lang?: string, fold?: boolean, onTheme?: (dark: boolean) => void,
+ *           topbar?: { watch?: string } }} [options]
+ */
 export function initKit({ app = 'app', lang, fold = false, onTheme, topbar } = {}) {
   if (lang) _kitLang = _kitLangOf(lang);
   else if (!_kitLang) _kitLang = _kitLangOf();

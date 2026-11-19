@@ -1,5 +1,5 @@
-/* dashboard-kit v1.0.0 (kit/VERSION), copied from Dashboard-hub/kit, do not edit here */
-/* Dashboard-Kit 1.0.0 — the shared look of all dashboards, generalized from BTC-Poly (css/app.css).
+/* dashboard-kit v1.1.0 (kit/VERSION), copied from Dashboard-hub/kit, do not edit here */
+/* Dashboard-Kit 1.1.0 — the shared look of all dashboards, generalized from BTC-Poly (css/app.css).
    Source: Dashboard-hub/kit. Copies in the app repos are never edited by hand: change the source, bump kit/VERSION,
    run `node kit/tools/sync.mjs`. App-specific styles go in the app's own stylesheet, loaded after this one. */
 
@@ -18,7 +18,9 @@
   --grid:#e5e5ea; --axis:#c7c7cc; --border:rgba(60,60,67,.14); --band:rgba(118,118,128,.07);
   --up:#2aa846; --up-text:#1c7a34; --up-wash:rgba(42,168,70,.13);
   --down:#cf1f1f; --down-text:#c4201b; --down-wash:rgba(207,31,31,.10);
-  --warning:#ff9500; --warning-wash:rgba(255,149,0,.20);
+  --warning:#ff9500; --warning-wash:rgba(255,149,0,.20); --warning-text:#9a4d00;
+  /* chip/badge text on washes: tinted text fails 4.5:1 on the grouped page in light mode */
+  --chip-up:var(--ink-1); --chip-down:var(--ink-1); --chip-accent:var(--ink-1);
   --accent:#007aff; --accent-text:#0066d6; --accent-track:rgba(0,122,255,.16);
   --accent-fill:#0071e3; --on-accent:#ffffff;
   --ex-1:#2a78d6; --ex-2:#eb6834; --ex-3:#1baf7a; --ex-4:#eda100; --ex-5:#e87ba4; --ex-6:#008300;
@@ -57,7 +59,8 @@
     --grid:#2f2f31; --axis:#48484a; --border:rgba(255,255,255,.12); --band:rgba(118,118,128,.14);
     --up:#30d158; --up-text:#30d158; --up-wash:rgba(48,209,88,.16);
     --down:#eb4036; --down-text:#ff6961; --down-wash:rgba(235,64,54,.18);
-    --warning:#ff9f0a; --warning-wash:rgba(255,159,10,.22);
+    --warning:#ff9f0a; --warning-wash:rgba(255,159,10,.22); --warning-text:#ff9f0a;
+    --chip-up:var(--up-text); --chip-down:var(--down-text); --chip-accent:var(--accent-text);
     --accent:#0a84ff; --accent-text:#409cff; --accent-track:rgba(10,132,255,.24);
     --accent-fill:#0071e3; --on-accent:#ffffff;
     --ex-1:#3987e5; --ex-2:#d95926; --ex-3:#199e70; --ex-4:#c98500; --ex-5:#d55181; --ex-6:#008300;
@@ -79,7 +82,8 @@
   --grid:#2f2f31; --axis:#48484a; --border:rgba(255,255,255,.12); --band:rgba(118,118,128,.14);
   --up:#30d158; --up-text:#30d158; --up-wash:rgba(48,209,88,.16);
   --down:#eb4036; --down-text:#ff6961; --down-wash:rgba(235,64,54,.18);
-  --warning:#ff9f0a; --warning-wash:rgba(255,159,10,.22);
+  --warning:#ff9f0a; --warning-wash:rgba(255,159,10,.22); --warning-text:#ff9f0a;
+    --chip-up:var(--up-text); --chip-down:var(--down-text); --chip-accent:var(--accent-text);
   --accent:#0a84ff; --accent-text:#409cff; --accent-track:rgba(10,132,255,.24);
   --accent-fill:#0071e3; --on-accent:#ffffff;
   --ex-1:#3987e5; --ex-2:#d95926; --ex-3:#199e70; --ex-4:#c98500; --ex-5:#d55181; --ex-6:#008300;
@@ -189,6 +193,10 @@ a, button, select, input, textarea, summary, label { touch-action:manipulation; 
 .icon-btn[aria-pressed="true"] svg { fill:currentColor; }
 .icon-btn:disabled { opacity:.45; cursor:default; }
 .icon-btn.plain { background:transparent; }
+.icon-btn.sm { width:32px; height:32px; }
+.icon-btn.sm::after { inset:-6px; }                                 /* still 44px to hit */
+.icon-btn.busy > svg { animation:kit-spin .9s linear infinite; }
+.icon-btn[hidden], .btn[hidden] { display:none; }                   /* display:grid/flex would beat [hidden] */
 /* back to the hub: the first thing in the bar, hidden by kit.js inside an installed app */
 .hub-btn { margin-left:-2px; }
 
@@ -206,7 +214,9 @@ a, button, select, input, textarea, summary, label { touch-action:manipulation; 
 .card.flush > .card-head { padding:var(--pad) var(--pad) 0; }
 .card.flush > .card-pad { padding:0 var(--pad) var(--pad); }
 /* headings outside the cards, iOS grouped style (sentence case) */
-.section-label { font-size:13px; font-weight:500; color:var(--muted-text); margin:4px var(--pad) calc(6px - var(--gap)); }
+.section-label { font-size:13px; font-weight:500; line-height:1.3; color:var(--muted-text); margin:4px var(--pad) 6px; }
+/* in gap containers pull the next card up to 6px (outside them a negative margin would let the card cover the label) */
+:is(.wrap, .stack) > .section-label { margin-bottom:calc(6px - var(--gap)); }
 .section-title { font-size:22px; font-weight:700; letter-spacing:-.02em; line-height:1.2; margin:10px 2px calc(4px - var(--gap)); }
 /* key-value rows (detail panels, track records) */
 .kv { display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding:8px 0; border-top:1px solid var(--grid); font-size:13px; color:var(--ink-2); }
@@ -381,9 +391,9 @@ textarea.input { min-height:72px; line-height:1.4; resize:vertical; }
   background:var(--surface-2); color:var(--ink-2);
 }
 .chip.warn   { background:var(--warning-wash); color:var(--ink-1); }
-.chip.up     { background:var(--up-wash); color:var(--up-text); }
-.chip.down   { background:var(--down-wash); color:var(--down-text); }
-.chip.accent { background:var(--accent-wash); color:var(--accent-text); }
+.chip.up     { background:var(--up-wash); color:var(--chip-up); }
+.chip.down   { background:var(--down-wash); color:var(--chip-down); }
+.chip.accent { background:var(--accent-wash); color:var(--chip-accent); }
 .chip.lg { padding:5px 12px; font-size:13px; font-weight:500; }
 button.chip { border:0; font-family:inherit; cursor:pointer; transition:transform .1s ease-out, background-color .15s, color .15s; }
 button.chip:active { transform:scale(.95); }
@@ -392,10 +402,10 @@ button.chip[aria-pressed="true"] { background:var(--accent-wash); color:var(--ac
   display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:6px; vertical-align:1px; white-space:nowrap;
   font-size:11px; font-weight:700; line-height:1.35; letter-spacing:.01em; background:var(--surface-2); color:var(--ink-2);
 }
-.badge.up     { background:var(--up-wash); color:var(--up-text); }
-.badge.down   { background:var(--down-wash); color:var(--down-text); }
+.badge.up     { background:var(--up-wash); color:var(--chip-up); }
+.badge.down   { background:var(--down-wash); color:var(--chip-down); }
 .badge.warn   { background:var(--warning-wash); color:var(--ink-1); }
-.badge.accent { background:var(--accent-wash); color:var(--accent-text); }
+.badge.accent { background:var(--accent-wash); color:var(--chip-accent); }
 .badge.solid  { background:var(--ink-1); color:var(--surface); }
 
 /* ── KPI tiles ── */
