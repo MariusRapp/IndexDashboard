@@ -116,3 +116,14 @@ section:first-of-type .section-title { margin-top: 4px; }
   .stat-tile { --pad: 14px; }
   .topbar-tools { padding-bottom: 8px; }
 }
+
+/* ---------- Refresh button setup sheet ---------- */
+#refresh-btn:disabled { opacity: 1; cursor: progress; }
+.token-text, .token-alt { font-size: 14px; line-height: 1.5; margin: 0; color: var(--ink-2); }
+.token-alt { font-size: 13px; color: var(--muted-text); }
+.token-steps { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.6; color: var(--ink-1); }
+.token-steps b { font-weight: 600; }
+#token-sheet a { color: var(--accent-text); }
+.token-error { margin: 0; font-size: 13px; color: var(--down-text); }
+.token-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.token-actions .danger-text { color: var(--down-text); margin-right: auto; }

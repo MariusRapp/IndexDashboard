@@ -2,12 +2,12 @@
 // Shell: network first, cached copy offline. data/*.json: network first, last good copy as fallback (the page then
 // says "Offline · Updated …"). Only caches named kit-index-* are touched; the origin is shared with other apps.
 const APP = 'index';
-const VERSION = '2026-11-20.1';
+const VERSION = '2026-11-20.2';
 const PREFIX = `kit-${APP}-`;
 const CACHE = PREFIX + VERSION;
 const DATA_CACHE = PREFIX + 'data';
 
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'kit/kit.css', 'kit/kit.js', 'assets/style.css', 'assets/app.js', 'assets/info.js', 'icons/icon-192.png'];
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'kit/kit.css', 'kit/kit.js', 'assets/style.css', 'assets/app.js', 'assets/info.js', 'assets/refresh.js', 'icons/icon-192.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
