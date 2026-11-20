@@ -25,7 +25,23 @@ section:first-of-type .section-title { margin-top: 4px; }
 
 /* ---------- Market tiles ---------- */
 .stat-tile .label, .meter-title, .mini-meter-label { font-size: 13px; font-weight: 500; color: var(--ink-2); padding-right: 30px; }
-.stat-tile .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-tile .label { display: flex; align-items: center; min-width: 0; }
+.stat-tile .label .title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* ---------- Info button (ⓘ after each title) + info sheet ---------- */
+.info-btn {
+  position: relative; display: inline-grid; place-items: center; flex: none;
+  width: 20px; height: 20px; padding: 0; margin-left: 4px; vertical-align: -5px;
+  border: 0; border-radius: 50%; background: transparent; color: var(--muted-text); cursor: pointer;
+  transition: transform .1s ease-out, background-color .15s, color .15s;
+}
+.info-btn::after { content: ''; position: absolute; inset: -10px; }   /* ~40px to hit */
+.info-btn:active { transform: scale(.88); background: var(--surface-2); }
+@media (hover: hover) { .info-btn:hover { color: var(--accent-text); } }
+.info-sheet .sheet-body { padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom)); }
+.info-block h3 { font-size: 13px; font-weight: 600; color: var(--muted-text); margin: 0 0 4px; }
+.info-block p { font-size: 15px; line-height: 1.5; margin: 0; color: var(--ink-1); }
+.info-block b { font-weight: 600; }
 .stat-tile .value { font-family: var(--font-num); font-size: 26px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .stat-tile .delta { font-size: 14px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .delta.up { color: var(--up-text); }
