@@ -1,4 +1,5 @@
-import { initKit, setStatus, formatStamp, toast, bindSeg } from "../kit/kit.js";
+import { initKit, setStatus, formatStamp, toast, bindSeg, openSheet } from "../kit/kit.js";
+import { INFO } from "./info.js?v=4";
 
 const DATA_URL = "data/latest.json";
 const RANGE_DAYS = { "1W": 7, "1M": 31, "3M": 92 };
@@ -254,6 +255,32 @@ function restoreExpanded() {
   for (const id of state.expanded) applyExpansion(id, true);
 }
 
+/* ---------- info sheet ("what does this mean?") ---------- */
+
+// Title text plus an ⓘ button, if an explanation exists for this key.
+function titleWithInfo(text, key) {
+  const btn = INFO[key]
+    ? `<button type="button" class="info-btn" data-info="${key}" aria-label="What does this mean?" title="What does this mean?">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="4.9" r="1" fill="currentColor"/></svg>
+      </button>`
+    : "";
+  return `<span class="title-text">${text}</span>${btn}`;
+}
+
+document.addEventListener("click", (ev) => {
+  const btn = ev.target.closest(".info-btn");
+  if (!btn) return;
+  const info = INFO[btn.dataset.info];
+  if (!info) return;
+  const card = btn.closest(".card");
+  const title = card?.querySelector(".title-text")?.innerHTML || "";
+  document.getElementById("info-title").innerHTML = title;
+  document.getElementById("info-body").innerHTML = `
+    <div class="info-block"><h3>What is it?</h3><p>${info.what}</p></div>
+    <div class="info-block"><h3>How to read it</h3><p>${info.read}</p></div>`;
+  openSheet("#info-sheet");
+});
+
 /* ---------- market tiles ---------- */
 
 function sliceSeries(market, range) {
@@ -311,7 +338,7 @@ function renderMarketTile(market) {
   return `
     <div class="card stat-tile">
       ${expandable ? expandButton(id) : ""}
-      <div class="label">${market.name}</div>
+      <div class="label">${titleWithInfo(market.name, market.symbol)}</div>
       <div class="value">${formatNumber(market.price, { maximumFractionDigits: 2 })}</div>
       <div class="delta ${cls}">${cls === "up" ? "▲ " : cls === "down" ? "▼ " : ""}${deltaHtml}</div>
       ${sparklineWithGrid(closes)}
@@ -334,7 +361,7 @@ function meterTrack(value, size) {
 
 function renderMeterCard(title, fg, id) {
   if (!fg) {
-    return `<div class="card meter-card"><div class="meter-title">${title}</div><p class="error">No data available</p></div>`;
+    return `<div class="card meter-card"><div class="meter-title">${titleWithInfo(title, id)}</div><p class="error">No data available</p></div>`;
   }
   const chip = ratingChip(fg.rating);
 
@@ -369,7 +396,7 @@ function renderMeterCard(title, fg, id) {
   return `
     <div class="card meter-card">
       ${expandable ? expandButton(id) : ""}
-      <div class="meter-title">${title}</div>
+      <div class="meter-title">${titleWithInfo(title, id)}</div>
       <div class="meter-value-row">
         <span class="meter-value">${formatNumber(fg.value)}</span>
         <span class="chip lg ${chip}">${fg.rating || "—"}</span>
@@ -403,7 +430,7 @@ function renderMiniMeter(component) {
   return `
     <div class="card mini-meter-card">
       ${expandable ? expandButton(id) : ""}
-      <div class="mini-meter-label">${component.label}</div>
+      <div class="mini-meter-label">${titleWithInfo(component.label, component.key)}</div>
       <div class="mini-meter-value-row">
         <span class="mini-meter-value">${formatNumber(component.value)}</span>
         <span class="chip ${chip}">${component.rating || "—"}</span>
