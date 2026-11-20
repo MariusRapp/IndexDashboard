@@ -1,16 +1,26 @@
 name: Update index data
 
+# GitHub runs scheduled workflows on a best-effort basis: under load, runs start late or are dropped
+# (the old "every 3 hours" schedule ran only ~3 times a day). So we ask more often than we need;
+# a dropped run then costs 30 minutes, not half a day. Each data commit adds only ~3 KB to the repo.
 on:
   schedule:
-    - cron: "15 */3 * * *"   # every 3 hours
-  workflow_dispatch: {}      # allows manual "Run workflow" trigger
+    - cron: "7,37 6-21 * * 1-5"   # weekdays every 30 min, 06–21 UTC (Europe + US trading hours)
+    - cron: "23 */3 * * *"        # around the clock every 3 h (crypto, weekends, nights)
+  workflow_dispatch: {}            # manual trigger: "Run workflow" on GitHub, or the refresh button on the page
 
 permissions:
   contents: write
 
+# Never two runs at once (scheduled + button); a waiting run still starts afterwards.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -26,5 +36,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/latest.json data/summary.json
-          git diff --cached --quiet && echo "No changes" || git commit -m "chore: update index data"
-          git push
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "chore: update index data"
+          # main may have moved while we fetched (code push, another run): rebase and retry
+          for i in 1 2 3; do
+            git pull --rebase -X theirs origin main && git push && exit 0
+            sleep 5
+          done
+          exit 1

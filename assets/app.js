@@ -1,5 +1,6 @@
 import { initKit, setStatus, formatStamp, toast, bindSeg, openSheet } from "../kit/kit.js";
-import { INFO } from "./info.js?v=4";
+import { INFO } from "./info.js?v=5";
+import { initRefresh } from "./refresh.js?v=5";
 
 const DATA_URL = "data/latest.json";
 const RANGE_DAYS = { "1W": 7, "1M": 31, "3M": 92 };
@@ -498,16 +499,19 @@ function renderMarkets(data) {
   document.getElementById("commodities-grid").innerHTML = byGroup("commodities").map(renderMarketTile).join("");
 }
 
+function applyData(data) {
+  state.data = data;
+  renderFearGreed(data);
+  renderMarkets(data);
+  renderUpdatedAt(data.updated_at);
+  restoreExpanded();
+}
+
 async function loadDashboard() {
   try {
     const res = await fetch(DATA_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    state.data = data;
-    renderFearGreed(data);
-    renderMarkets(data);
-    renderUpdatedAt(data.updated_at);
-    restoreExpanded();
+    applyData(await res.json());
   } catch (err) {
     setStatus("err", "Load failed");
     toast("Could not load data", err.message);
@@ -540,6 +544,13 @@ addEventListener("kit:online", () => updateFreshness());
 setInterval(updateFreshness, 60000);
 
 loadDashboard();
+
+initRefresh({
+  dataUrl: DATA_URL,
+  currentStamp: () => state.data?.updated_at,
+  onData: applyData,
+  onDone: updateFreshness,
+});
 
 if ("serviceWorker" in navigator) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

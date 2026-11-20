@@ -18,7 +18,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <script>try{const t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="kit/kit.css">
-<link rel="stylesheet" href="assets/style.css?v=4">
+<link rel="stylesheet" href="assets/style.css?v=5">
 </head>
 <body>
 <header class="topbar">
@@ -29,6 +29,9 @@
       <div class="brand-sub">Market indices &amp; sentiment indicators</div>
     </div>
     <span class="status" data-kit="status" id="status"><i class="dot wait"></i><span class="status-text">Loading …</span></span>
+    <button class="icon-btn" type="button" id="refresh-btn" aria-label="Refresh data now" title="Refresh data now">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
+    </button>
     <button class="icon-btn" type="button" data-kit="theme"></button>
   </div>
   <div class="topbar-tools" id="page-tools">
@@ -86,7 +89,7 @@
 
   <footer class="page-footer">
     <p id="updated-at">—</p>
-    <p class="sources">Sources: CNN Fear &amp; Greed Index, alternative.me (Crypto Fear &amp; Greed), Yahoo Finance. Data refreshes every 3 hours via GitHub Actions.</p>
+    <p class="sources">Sources: CNN Fear &amp; Greed Index, alternative.me (Crypto Fear &amp; Greed), Yahoo Finance. Data refreshes automatically via GitHub Actions (every 30 min on weekdays during trading hours, otherwise every 3 hours; GitHub sometimes starts runs late) or with the refresh button.</p>
   </footer>
 </main>
 
@@ -100,8 +103,35 @@
   <div class="sheet-body" id="info-body"></div>
 </dialog>
 
+<dialog class="sheet info-sheet" id="token-sheet" aria-labelledby="token-title">
+  <div class="sheet-head">
+    <h2 id="token-title">Refresh button setup</h2>
+    <button class="icon-btn sm" type="button" data-kit="close" aria-label="Close" title="Close">
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <form class="sheet-body" id="token-form">
+    <p class="token-text">The button starts the data update on GitHub. For that, this device needs a GitHub token once. It is saved only in this browser.</p>
+    <ol class="token-steps">
+      <li><a href="https://github.com/settings/personal-access-tokens/new?name=Index%20Dashboard%20refresh&amp;description=Refresh%20button%20on%20the%20Index%20Dashboard&amp;target_name=MariusRapp&amp;expires_in=365&amp;actions=write" target="_blank" rel="noopener">Create a token on GitHub</a></li>
+      <li>Repository access: <b>Only select repositories</b> → <b>IndexDashboard</b></li>
+      <li>Permissions: <b>Actions → Read and write</b> (nothing else)</li>
+      <li>Generate, copy and paste it here:</li>
+    </ol>
+    <label class="field">
+      <input class="input" id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+    </label>
+    <p class="token-error" id="token-error" hidden></p>
+    <div class="token-actions">
+      <button class="btn plain danger-text" type="button" id="token-remove" hidden>Remove token</button>
+      <button class="btn primary" type="submit">Save &amp; refresh</button>
+    </div>
+    <p class="token-alt">No token at hand? <a href="https://github.com/MariusRapp/IndexDashboard/actions/workflows/update-data.yml" target="_blank" rel="noopener">Run the update on GitHub</a> (“Run workflow”).</p>
+  </form>
+</dialog>
+
 <div class="toast" data-kit="toast" role="status" aria-live="polite" hidden><b></b><span></span></div>
 
-<script type="module" src="assets/app.js?v=4"></script>
+<script type="module" src="assets/app.js?v=5"></script>
 </body>
 </html>
